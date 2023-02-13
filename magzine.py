@@ -8,7 +8,8 @@ import argparse
 import logging
 import os
 import sys
-from typing import List, Tuple
+import ipdb
+from typing import List, Tuple, Dict, Union
 
 
 __VERSION__ = "0.1"
@@ -34,7 +35,7 @@ except Exception as e:
     sys.exit(1)
 
 
-def get_args():
+def get_args() -> Dict[str, Union[bool, str]]:
     """Command Line arguements are set in ftn.
 
     The ftn returns the specified arguments
@@ -65,7 +66,7 @@ def get_args():
             required=False,
             dest="file",
             metavar="file_name",
-            help='Specify the file name including the path.' 
+            help='Specify the file name including the path.'
         )
 
         return args_parser.parse_args()
@@ -78,25 +79,91 @@ def get_args():
         sys.exit(1)
 
 
-def is_article_valid(article: str) -> bool:
-    """Check article format is valid or not. Return True for valid article
-    otherwise false.
+def is_str_emp(str2):
+    """Check whether string is empty or not, return True if empty.
 
+    otherwise return False.
+    """
+    try:
+        str1 = str(str2)
+        logger.debug("'{}' string converted into '{}'".format(str2, str1))
+        if (str1 == "None") or len(str1) == 0:
+            logger.debug("'{}' was empty".format(str1))
+            return True
+
+        logger.debug("'{}' string is not empty.".format(str1))
+        return False
+    except (ValueError, Exception) as ex:
+        logger.debug("[D] {} exception occurs.while converting "
+                     "into string. Exception: {}".format(str2, ex))
+
+
+def is_article_valid(article: str) -> tuple[bool, int, int]:
+    """Check article format is valid or not. Return tuple.
+
+    Return tuple (<True_for_valid_article otherwise>,
+    start_page_article, end_page_article)
     e.g: 10-15 is article containing  pages from 10 to 15. Check whether
     hyphen '-' exist between ranges then check page range contains only
     integers.
     """
-    pass
+    start_page = end_page = None
+    if not is_str_emp(article) and '-' in article:
+        start_page, end_page = article.split('-')
+    try:
+        start_page = int(start_page)
+        end_page = int(end_page)
+        if (isinstance(start_page, int) and isinstance(end_page, int)
+                and end_page >= start_page):
+            return (True, start_page, end_page)
+        else:
+            logger.debug("[D] Article '{}' contains invalid start or "
+                         "end page numbers.".format(article))
+            return (False, start_page, end_page)
+
+    except (ValueError, Exception) as ex:
+        logger.debug("[D] {} Article start or end page is not a "
+                     "number. Exception: {}".format(article, ex))
 
 
-def check_overlapping_articles(article_1: str, article_2: str) -> str:
+def check_overlapping_articles(article_1: str,
+                               article_2: str) -> Tuple[bool, str]:
     """Check which pages of 2 articles are overlapping and return those pages.
 
     article_1: First article contains the page range from magzine. e.g: 10-15
     article_2: 2nd article contains the page range from magzine. e.g: 12-15
     return overlapping articles i.e 12-15
     """
-    pass
+    try:
+        art_1_is_valid, art_1_start_pg, art_1_end_pg = is_article_valid(
+            article_1)
+        art_2_is_valid, art_2_start_pg, art_2_end_pg = is_article_valid(
+            article_2)
+        if art_1_is_valid and art_2_is_valid:
+            art_1_pg_gen = range(art_1_start_pg, art_1_end_pg+1)
+            art_2_pg_gen = range(art_2_start_pg, art_2_end_pg+1)
+            overlap_pgs = list(set(art_1_pg_gen) & set(art_2_pg_gen))
+
+            if len(overlap_pgs) != 0:
+                overlap_art_strt_pg = min(overlap_pgs)
+                overlap_art_end_pg = max(overlap_pgs)
+                output = ("Overlapping pages b/W '{}' & '{}' : '{}-{}'"
+                          "".format(article_1, article_2,
+                                    overlap_art_strt_pg, overlap_art_end_pg))
+                logger.debug("[D] {}".format(output))
+                return (True,
+                        "{}-{}".format(
+                            overlap_art_strt_pg, overlap_art_end_pg)
+                        )
+            else:
+                output = ("There are no Overlapping pages b/W '{}' & '{}'"
+                          "".format(article_1, article_2))
+                logger.debug("[D] {}".format(output))
+                return (False, None)
+    except Exception as ex:
+        logger.error("[E] During checking of overlapping pages b/W '{}' and "
+                     "'{}' error occured. Exception: {}".format(
+                         article_1, article_2, ex))
 
 
 def seperate_valid_invalid_articles_from_line(
@@ -128,6 +195,7 @@ def main():
         logger.setLevel(logging.DEBUG)
     else:
         logger.setLevel(logging.INFO)
+
 
 
 if __name__ == "__main__":
