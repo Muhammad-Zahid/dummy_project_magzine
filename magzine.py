@@ -172,11 +172,29 @@ def seperate_valid_invalid_articles_from_line(
 
     file_line: it is a line string
     Returns the tuple containing two string elements.
-    Two articles are seperated by comma ';'
+    Two articles are seperated by comma ','
     i.e ("<valid_article_1, valid_article_2>",
     <invalid_article_1, invalid_article_2>)
     """
-    pass
+    try:
+        split_art_ls = file_line.split(',')
+        valid_art_ls = ""
+        invalid_art_ls = ""
+        for art in split_art_ls:
+            art = art.strip()
+            is_art_valid, start_pg, end_pg = is_article_valid(art)
+            if is_art_valid:
+                valid_art_ls = "{},{}".format(valid_art_ls, art)
+            else:
+                invalid_art_ls = "{},{}".format(invalid_art_ls, art)
+
+        valid_art_ls = valid_art_ls[1:]
+        invalid_art_ls = invalid_art_ls[1:]
+
+        return (valid_art_ls, invalid_art_ls)
+    except Exception as ex:
+        logger.error("[E] Error occured while seperating valid & invalid "
+                     "articles. Error: {}".format(ex))
 
 
 def read_articles_from_file(file_name: str) -> list[tuple[str, str]]:
@@ -195,6 +213,7 @@ def main():
         logger.setLevel(logging.DEBUG)
     else:
         logger.setLevel(logging.INFO)
+
 
 
 
