@@ -8,7 +8,7 @@ import argparse
 import logging
 import os
 import sys
-from typing import list, tuple
+from typing import List, Tuple
 
 
 __VERSION__ = "0.1"
@@ -57,8 +57,19 @@ def get_args():
         args_parser.add_argument(
             "--debug", "-d", action="store_true", help="show debug output."
         )
+        # 'Action' is positional argument.
+        args_parser.add_argument(
+            "--file",
+            "-f",
+            type=str,
+            required=False,
+            dest="file",
+            metavar="file_name",
+            help='Specify the file name including the path.' 
+        )
 
         return args_parser.parse_args()
+
     except Exception as excep1:
         logger.error(
             "[E] while getting the arguments in arg_parse ftn. Error: "
@@ -112,6 +123,7 @@ def read_articles_from_file(file_name: str) -> list[tuple[str, str]]:
 def main():
     """Calls the relative ftn"""
     args = get_args()
+    file_name = args.file
     if args.debug:
         logger.setLevel(logging.DEBUG)
     else:
