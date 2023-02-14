@@ -8,7 +8,6 @@ import argparse
 import logging
 import os
 import sys
-import ipdb
 from typing import List, Tuple, Dict, Union
 
 
@@ -195,14 +194,72 @@ def seperate_valid_invalid_articles_from_line(
     except Exception as ex:
         logger.error("[E] Error occured while seperating valid & invalid "
                      "articles. Error: {}".format(ex))
+        sys.exit(1)
 
 
-def read_articles_from_file(file_name: str) -> list[tuple[str, str]]:
+def write_to_file(file: str, line: str) -> None:
+    """Append content to specified file.
+    """
+    try:
+        with open(file, 'a') as wf:
+            wf.write("{}\n".format(line))
+    except OSError as oe:
+        logger.error("[E] OS error occured trying to open '{}'. Error: "
+                     "{}".format(file, oe))
+        sys.exit(1)
+    except Exception as ex:
+        logger.error("[E] Unexpected Error occured while opening '{}'"
+                     "Error: {}".format(file, ex))
+        sys.exit(1)
+
+
+def read_articles_from_file(file_name: str) -> None:
     """Read articles from file line by line and seperate valid and invalid
-    articles into two files w.r.t to each line.
+    articles into two files w.r.t to each line.l
 
     """
-    pass
+    valid_art_file = "./valid_art.txt"
+    invalid_art_file = "./invalid_art.txt"
+    try:
+        if os.path.isfile(valid_art_file):
+            os.remove(valid_art_file)
+        if os.path.isfile(invalid_art_file):
+            os.remove(invalid_art_file)
+    except Exception as ex:
+        logger.error("[E] Error occured while removing '{}' or '{}'. "
+                     "Please remove these files from current directory. "
+                     "Error: {}".format(valid_art_file, invalid_art_file, ex))
+        sys.exit(1)
+
+    try:
+        with open("{}".format(file_name), 'r') as file:
+            for line in file:
+                line = line.strip()
+
+                if line != '':
+                    valid_art, invalid_art = seperate_valid_invalid_articles_from_line(
+                        line)
+                elif line == '':
+                    valid_art = invalid_art = ""
+                else:
+                    valid_art = ''
+                    invalid_art = line
+
+                write_to_file(valid_art_file, valid_art)
+                write_to_file(invalid_art_file, invalid_art)
+
+    except FileNotFoundError as fe:
+        logger.error("[E] File not found '{}'. Error: {}".format(
+            file_name, fe))
+        sys.exit(1)
+    except OSError as oe:
+        logger.error("[E] OS error occured trying to open '{}'. Error: "
+                     "{}".format(file_name, oe))
+        sys.exit(1)
+    except Exception as ex:
+        logger.error("[E] Unexpected Error occured while opening '{}'"
+                     "Error: {}".format(file_name, ex))
+        sys.exit(1)
 
 
 def main():
@@ -214,7 +271,39 @@ def main():
     else:
         logger.setLevel(logging.INFO)
 
+    read_articles_from_file(file_name)
 
+    output_file = './output.txt'
+    try:
+        if os.path.isfile(output_file):
+            os.remove(output_file)
+    except Exception as ex:
+        logger.error("[E] unexpected error while removing '{}' file to "
+                     "save output. Error: {}".format(output_file, ex))
+
+    try:
+        valid_art = "./valid_art.txt"
+        is_overlap_exist = overlap_pgs = None
+        with open(valid_art, 'r') as file:
+            for line in file:
+                split_art = line.strip().split(',')
+            for art_1 in split_art:
+                for art_2 in split_art:
+                    is_overlap_exist, overlap_pgs = check_overlapping_articles(
+                       art_1, art_2)
+                    if is_overlap_exist:
+                        output = ("Overlapping pages b/W '{}' and '{}' : "
+                                  "'{}'").format(
+                                      art_1, art_2, overlap_pgs)
+                        logger.info("{}".format(output))
+                        write_to_file(output_file, output)
+    except OSError as oe:
+        logger.error("[E] OS error occured trying to open '{}'. Error: "
+                     "{}".format(file, oe))
+        sys.exit(1)
+    except Exception as ex:
+        logger.error("[E] Unexpected Error occured while opening '{}'"
+                     "Error: {}".format(file, ex))
 
 
 if __name__ == "__main__":
