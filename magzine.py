@@ -62,7 +62,7 @@ def get_args() -> Dict[str, Union[bool, str]]:
             "--file",
             "-f",
             type=str,
-            required=False,
+            required=True,
             dest="file",
             metavar="file_name",
             help='Specify the file name including the path.'
