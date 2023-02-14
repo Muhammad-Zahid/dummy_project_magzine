@@ -1,4 +1,4 @@
-## The script will generate the overlapping articles pairs from a file and print them and save in a file namely `output.txt` and generate output on terminal as well.
+####### The script will generate the overlapping articles pairs from a file and print them and save in a file namely `output.txt` and generate output on terminal as well.
 ### create the virtual enviroment
 `python3 -m venv .env`
 
